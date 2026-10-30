@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">行程提醒</string>
+    <string name="today">今天</string>
+    <string name="tab_month">月</string>
+    <string name="tab_week">周</string>
+    <string name="tab_agenda">日程</string>
+    <string name="new_event">新建日程</string>
+    <string name="edit_event">编辑日程</string>
+    <string name="save">保存</string>
+    <string name="delete">删除</string>
+    <string name="cancel">取消</string>
+    <string name="title_hint">标题</string>
+    <string name="location_hint">地点</string>
+    <string name="note_hint">备注</string>
+    <string name="all_day">全天</string>
+    <string name="start">开始</string>
+    <string name="end">结束</string>
+    <string name="category">分类</string>
+    <string name="remind">提醒</string>
+    <string name="remind_none">不提醒</string>
+    <string name="remind_at_time">准时提醒</string>
+    <string name="remind_5">提前5分钟</string>
+    <string name="remind_15">提前15分钟</string>
+    <string name="remind_30">提前30分钟</string>
+    <string name="remind_60">提前1小时</string>
+    <string name="no_events">无日程</string>
+    <string name="week_days_short">日一二三四五六</string>
+    <string name="confirm_delete">确定删除这条日程吗？</string>
+    <string name="title_required">请填写标题</string>
+    <string name="tab_day">日</string>
+    <string name="repeat">重复</string>
+    <string name="repeat_none">不重复</string>
+    <string name="repeat_daily">每天</string>
+    <string name="repeat_weekly">每周</string>
+    <string name="repeat_monthly">每月</string>
+    <string name="until">重复截止</string>
+    <string name="until_forever">永久</string>
+    <string name="menu_export">导出数据</string>
+    <string name="menu_import">导入数据</string>
+    <string name="menu_about">关于</string>
+    <string name="export_done">已导出</string>
+    <string name="import_done">导入完成</string>
+    <string name="import_fail">导入失败</string>
+    <string name="widget_desc">今日日程</string>
+    <string name="import_ok">导入成功</string>
+    <string name="import_none">没有新增记录（可能已导入过）</string>
+    <string name="import_bad">导入失败：不是有效的「行程提醒」JSON 文件</string>
+    <string name="import_empty">导入失败：文件是空的</string>
+    <string name="set_time">选择时间</string>
+    <string name="set_date">选择日期</string>
+    <string name="ok">确定</string>
+</resources>
+

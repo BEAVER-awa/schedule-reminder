@@ -1,0 +1,24 @@
+# 构建产物
+build/
+build-obf/
+dist/
+*.apk
+*.idsig
+
+# 签名密钥与口令（绝不可入库）
+*.keystore
+*.jks
+*.p12
+*.pem
+keystore.properties
+KS_PASS
+
+# IDE
+.idea/
+*.iml
+.gradle/
+local.properties
+
+# 系统
+.DS_Store
+Thumbs.db

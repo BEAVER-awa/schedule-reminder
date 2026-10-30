@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand">#FF8FA6D6</color>
+    <color name="brand_dark">#FF6E8AC4</color>
+
+    <color name="window_bg">#FF15191F</color>
+    <color name="surface">#FF202630</color>
+    <color name="card_bg">#FF202630</color>
+
+    <color name="text_primary">#FFE7ECF4</color>
+    <color name="text_secondary">#FFA4AFBF</color>
+    <color name="text_tertiary">#FF6B7688</color>
+
+    <color name="weekday">#FFA4AFBF</color>
+    <color name="weekend">#FFC08A9B</color>
+    <color name="out_month">#FF4A5464</color>
+
+    <color name="divider">#FF343D49</color>
+    <color name="grid_line">#FF2A313B</color>
+    <color name="selection">#33FFFFFF</color>
+
+    <color name="chip_bg">#FF191F27</color>
+    <color name="chip_bg_on">#FF1D283E</color>
+    <color name="chip_text_on">#FF9EB6E0</color>
+
+    <color name="statusbar">#FF15191F</color>
+    <color name="nav_divider">#FF343D49</color>
+    <color name="scrim">#66000000</color>
+    <color name="today_ring">#FF9EB6E0</color>
+
+    <color name="day_sel_bg">#FF254E9B</color>
+    <color name="day_sel_text">#FFFFFFFF</color>
+    <color name="lunar_text">#FF6B7688</color>
+    <color name="lunar_hi">#FF9EB6E0</color>
+
+    <color name="segment_bg">#FF1B222B</color>
+    <color name="segment_sel">#FF2A3444</color>
+    <color name="segment_sel_text">#FFD6E2F5</color>
+    <color name="segment_text">#FFA4AFBF</color>
+
+    <color name="infobar_bg">#FF1D283E</color>
+    <color name="infobar_text">#FF9EB6E0</color>
+    <color name="circle_bg">#FF202630</color>
+    <color name="sheet_handle">#FF3A4453</color>
+    <color name="toggle_off">#FF3A4453</color>
+    <color name="danger">#FFE08578</color>
+    <color name="sheet_line">#FF2A313B</color>
+</resources>
