@@ -59,6 +59,27 @@ public class CategoryActivity extends Activity {
         t.setLayoutParams(tlp);
         View sp = new View(this);
         sp.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
+        TextView resetBtn = new TextView(this);
+        resetBtn.setText("重算色");
+        resetBtn.setTextSize(13);
+        resetBtn.setGravity(Gravity.CENTER);
+        resetBtn.setTextColor(Theme.brand(this));
+        resetBtn.setPadding(dp(10), dp(8), dp(10), dp(8));
+        resetBtn.setContentDescription("按分类名称重新计算颜色");
+        resetBtn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                new ConfirmSheet(CategoryActivity.this, "重算分类颜色",
+                        "按分类名称重新匹配语义色（如「健身」→绿、「会议」→蓝），你自己改过的颜色会被覆盖。",
+                        "重算", false, new ConfirmSheet.OnOk() {
+                    public void onOk() {
+                        Store.get(CategoryActivity.this).resetCatColors();
+                        rebuild();
+                    }
+                }).showSheet();
+            }
+        });
+        Press.attach(resetBtn);
+
         TextView sortBtn = new TextView(this);
         sortBtn.setText("排序");
         sortBtn.setTextSize(13);
@@ -87,6 +108,7 @@ public class CategoryActivity extends Activity {
         bar.addView(back);
         bar.addView(t);
         bar.addView(sp);
+        bar.addView(resetBtn);
         bar.addView(sortBtn);
         bar.addView(add);
         root.addView(bar);
@@ -105,7 +127,7 @@ public class CategoryActivity extends Activity {
     private void rebuild() {
         list.removeAllViews();
         TextView tip = new TextView(this);
-        tip.setText("点分类可改名/换色/删除；右上「排序」可拖动调整顺序。删除分类后，原日程会移到第一个分类。");
+        tip.setText("点分类可改名/换色/删除；右上「排序」可拖动调整顺序，「重算色」按名称重新匹配颜色。删除分类后，原日程会移到第一个分类。");
         tip.setTextSize(12);
         tip.setTextColor(c(R.color.text_secondary));
         tip.setPadding(dp(2), dp(2), dp(2), dp(12));

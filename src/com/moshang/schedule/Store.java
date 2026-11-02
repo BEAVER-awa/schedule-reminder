@@ -23,11 +23,56 @@ import java.util.UUID;
 /** 数据仓库：本地 JSON 持久化 + 重复规则 + 闹钟排程 + 导入导出 */
 public class Store {
 
-    /** 分类色板：低饱和 9 色（calendar-design 技能要求「低饱和、9 色以内」） */
+    /** 分类色板：12 色，每种都对应一类常见语义（见 SEMANTIC），
+     *  中饱和、明度适中，浅色与深色主题下都清晰可辨 */
     public static final int[] PALETTE = {
-            0xFF3F6BA8, 0xFF3E8C7E, 0xFF6C7A96, 0xFF4E8F8B, 0xFF7A8F76,
-            0xFF7F7398, 0xFF6E7A88, 0xFFA87E8E, 0xFFA89052
+            0xFF4A86D8, // 0 工作 · 蓝
+            0xFF7C7EE8, // 1 学习 · 靛
+            0xFF35BE7F, // 2 运动 · 绿
+            0xFF2FB9BC, // 3 生活 · 青
+            0xFFE85F5F, // 4 重要 · 红
+            0xFFE76AA0, // 5 健康 · 玫
+            0xFFF0922F, // 6 社交 · 橙
+            0xFF47AFE3, // 7 出行 · 天蓝
+            0xFFD9AB3C, // 8 财务 · 金
+            0xFFC08A52, // 9 家庭 · 棕
+            0xFF9E7AE0, // 10 娱乐 · 紫
+            0xFF8C97A6  // 11 其他 · 灰
     };
+
+    /** 分类名关键词 → PALETTE 下标。新建分类时按名称自动选一个语义相符的颜色。 */
+    private static final String[][] SEMANTIC = {
+            {"工作", "会议", "上班", "项目", "汇报", "客户", "加班", "出差", "面试", "述职"},
+            {"学习", "课程", "上课", "课", "考试", "作业", "复习", "自习", "讲座", "论文", "实验"},
+            {"运动", "健身", "跑步", "锻炼", "球", "游泳", "瑜伽", "骑行", "爬山"},
+            {"生活", "日常", "家务", "购物", "做饭", "买菜", "打扫", "收纳"},
+            {"重要", "紧急", "截止", "deadline", "DDL", "必须"},
+            {"医疗", "看病", "医院", "体检", "牙", "拿药", "复诊", "挂号", "健康"},
+            {"社交", "聚会", "聚餐", "约", "生日", "团建", "见面", "朋友"},
+            {"旅行", "出行", "航班", "高铁", "酒店", "旅游", "机场", "火车"},
+            {"财务", "账单", "缴费", "还款", "工资", "报销", "发票", "转账"},
+            {"家庭", "家", "父母", "孩子", "爸妈", "亲戚", "接"},
+            {"娱乐", "电影", "游戏", "休闲", "音乐", "追剧", "看剧", "放松"}
+    };
+
+    /** 按分类名推断一个默认颜色；没有关键词命中时用灰色（其他）。 */
+    public static int colorForName(String name) {
+        int c = colorOrZero(name);
+        return c == 0 ? PALETTE[PALETTE.length - 1] : c;
+    }
+
+    /** 同上，但没有命中时返回 0，调用方可以据此「保持原色不变」。 */
+    public static int colorOrZero(String name) {
+        if (name != null) {
+            String n = name.trim();
+            for (int i = 0; i < SEMANTIC.length; i++) {
+                for (int k = 0; k < SEMANTIC[i].length; k++) {
+                    if (n.contains(SEMANTIC[i][k])) return PALETTE[i];
+                }
+            }
+        }
+        return 0;
+    }
 
     public static final long DAY = 86400000L;
     private static final long H = 3600000L;
@@ -49,6 +94,51 @@ public class Store {
         ctx = c;
         sp = c.getSharedPreferences("schedule_store", Context.MODE_PRIVATE);
         load();
+        migratePalette();
+    }
+
+    /** 0.0.1 用过的那 9 个灰调色。升级到 0.0.2 时，凡是还停在旧色板上的分类，
+     *  按名称重新匹配成语义色；用户手动选过的颜色不在旧色板里，不会被覆盖。 */
+    private static final int[] OLD_PALETTE = {
+            // 0.0.1 的 9 色灰调板
+            0xFF3F6BA8, 0xFF3E8C7E, 0xFF6C7A96, 0xFF4E8F8B, 0xFF7A8F76,
+            0xFF7F7398, 0xFF6E7A88, 0xFFA87E8E, 0xFFA89052,
+            // 0.0.2 初版的 12 色（偏暗，已提亮替换）
+            0xFF3B6FB6, 0xFF5B5FC7, 0xFF2E9E6B, 0xFF2A9D9F, 0xFFD05353,
+            0xFFC8588C, 0xFFD9802F, 0xFF3F92C4, 0xFFB99135, 0xFFA4713F,
+            0xFF8A63C4, 0xFF77808F
+    };
+
+    private static boolean inOldPalette(int c) {
+        for (int i = 0; i < OLD_PALETTE.length; i++) {
+            if (OLD_PALETTE[i] == c) return true;
+        }
+        return false;
+    }
+
+    private void migratePalette() {
+        if (sp.getBoolean("cat_palette_v3", false)) return;
+        boolean changed = false;
+        for (int i = 0; i < cats.size(); i++) {
+            Category c = cats.get(i);
+            if (inOldPalette(c.color)) {
+                int nc = colorForName(c.name);
+                if (nc != c.color) {
+                    c.color = nc;
+                    changed = true;
+                }
+            }
+        }
+        for (int i = 0; i < events.size(); i++) {
+            Event e = events.get(i);
+            Category c = cat(e.category);
+            if (c != null && inOldPalette(e.color) && e.color != c.color) {
+                e.color = c.color;
+                changed = true;
+            }
+        }
+        sp.edit().putBoolean("cat_palette_v3", true).apply();
+        if (changed) save();
     }
 
     // ---------- 持久化 ----------
@@ -166,17 +256,17 @@ public class Store {
     }
 
     private void seed() {
-        cats.add(new Category("工作", PALETTE[0]));
-        cats.add(new Category("生活", PALETTE[3]));
-        cats.add(new Category("学习", PALETTE[4]));
-        cats.add(new Category("重要", PALETTE[8]));
-        cats.add(new Category("其他", PALETTE[1]));
+        cats.add(new Category("工作", colorForName("工作")));
+        cats.add(new Category("学习", colorForName("学习")));
+        cats.add(new Category("生活", colorForName("生活")));
+        cats.add(new Category("运动", colorForName("运动")));
+        cats.add(new Category("其他", colorForName("其他")));
 
         long today = dayStart(System.currentTimeMillis());
-        events.add(mk("团队周会", today + 10 * H, today + 11 * H, "工作", PALETTE[0], "会议室 A"));
-        events.add(mk("健身", today + 18 * H + 30 * M, today + 19 * H + 30 * M, "生活", PALETTE[3], "健身房"));
-        events.add(mk("项目复盘", today + 15 * H, today + 16 * H, "工作", PALETTE[1], ""));
-        events.add(mk("读书", today + DAY + 9 * H, today + DAY + 10 * H, "学习", PALETTE[4], "图书馆"));
+        events.add(mk("团队周会", today + 10 * H, today + 11 * H, "工作", colorForName("工作"), "会议室 A"));
+        events.add(mk("健身", today + 18 * H + 30 * M, today + 19 * H + 30 * M, "运动", colorForName("运动"), "健身房"));
+        events.add(mk("项目复盘", today + 15 * H, today + 16 * H, "工作", colorForName("工作"), ""));
+        events.add(mk("读书", today + DAY + 9 * H, today + DAY + 10 * H, "学习", colorForName("学习"), "图书馆"));
     }
 
     private Event mk(String title, long s, long e, String cat, int color, String loc) {
@@ -227,6 +317,26 @@ public class Store {
         return null;
     }
 
+    /** 渲染用色：始终以分类当前颜色为准，避免事件里的副本过期（改分类颜色后旧日程不变色） */
+    public int colorOf(Event e) {
+        Category c = cat(e.category);
+        return c != null ? c.color : e.color;
+    }
+
+    /** 按名称重置所有分类颜色，并同步到全部日程（分类管理页的一键修复入口） */
+    public void resetCatColors() {
+        for (int i = 0; i < cats.size(); i++) {
+            Category c = cats.get(i);
+            c.color = colorForName(c.name);
+        }
+        for (int i = 0; i < events.size(); i++) {
+            Event e = events.get(i);
+            Category c = cat(e.category);
+            if (c != null) e.color = c.color;
+        }
+        save();
+    }
+
     public Category cat(String name) {
         for (Category c : cats) if (c.name.equals(name)) return c;
         return null;
@@ -241,7 +351,9 @@ public class Store {
     public void addCat(String name, int color) {
         if (name == null || name.trim().length() == 0) return;
         if (cat(name) != null) return;
-        cats.add(new Category(name.trim(), color));
+        // color 传 0 表示「没指定」，按分类名推断语义色
+        int col = color == 0 ? colorForName(name) : color;
+        cats.add(new Category(name.trim(), col));
         save();
     }
 
@@ -417,7 +529,7 @@ public class Store {
                         l = new ArrayList<Integer>();
                         map.put(d, l);
                     }
-                    if (l.size() < 4) l.add(e.color);
+                    if (l.size() < 4) l.add(colorOf(e));
                 }
             }
         }
@@ -456,15 +568,40 @@ public class Store {
         return 0;
     }
 
+    /** 事件时长（毫秒），异常数据兜底 1 分钟 */
+    public static long durationOf(Event e) {
+        long d = e.end - e.start;
+        return d > 0 ? d : 60 * M;
+    }
+
+    /** 下一次（或正在进行中的）开始时刻；返回过去时刻表示「已经开始了」 */
+    public long nextStart(Event e) {
+        long now = System.currentTimeMillis();
+        long day = dayStart(now);
+        long dur = durationOf(e);
+        for (int i = -1; i < 400; i++) {
+            long d = day + i * DAY;
+            if (e.until > 0 && d > dayStart(e.until)) break;
+            if (occursOn(e, d)) {
+                long at = d + (e.start - dayStart(e.start));
+                if (at > now) return at;              // 还没开始
+                if (at + dur > now) return at;        // 正在进行
+            }
+        }
+        return 0;
+    }
+
     public void schedule(Event e) {
-        long at = nextFireTime(e);
-        if (at <= 0) return;
         try {
             AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
             if (am == null) return;
-            PendingIntent pi = pi(e);
-            if (Build.VERSION.SDK_INT >= 23) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi);
-            else am.setExact(AlarmManager.RTC_WAKEUP, at, pi);
+            long at = nextFireTime(e);
+            if (at > 0) setAlarm(am, at, piFor(e, K_REMIND));
+            long st = nextStart(e);
+            if (st > 0) {
+                setAlarm(am, st, piFor(e, K_BEGIN));
+                setAlarm(am, st + durationOf(e), piFor(e, K_END));
+            }
         } catch (Exception ignored) {
         }
     }
@@ -472,11 +609,22 @@ public class Store {
     public void cancel(String id) {
         try {
             AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
-            if (am == null) return;
-            PendingIntent pi = PendingIntent.getBroadcast(ctx, id.hashCode(),
-                    new Intent(ctx, ReminderReceiver.class).setAction(id),
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-            am.cancel(pi);
+            if (am != null) {
+                String[] kinds = {K_REMIND, K_BEGIN, K_END};
+                for (int i = 0; i < kinds.length; i++) {
+                    int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+                    if (Build.VERSION.SDK_INT >= 23) flags |= PendingIntent.FLAG_IMMUTABLE;
+                    PendingIntent pi = PendingIntent.getBroadcast(ctx, (id + "#" + kinds[i]).hashCode(),
+                            new Intent(ctx, ReminderReceiver.class)
+                                    .setAction(kinds[i] + ":" + id)
+                                    .putExtra("id", id).putExtra("kind", kinds[i]),
+                            flags);
+                    am.cancel(pi);
+                }
+            }
+            android.app.NotificationManager nm = (android.app.NotificationManager)
+                    ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) nm.cancel(id.hashCode());
         } catch (Exception ignored) {
         }
     }
@@ -488,13 +636,25 @@ public class Store {
         }
     }
 
-    private PendingIntent pi(Event e) {
+    /** 闹钟种类：提前提醒 / 开始（弹进行中通知）/ 结束（收掉通知）/ 手动停止 */
+    public static final String K_REMIND = "remind";
+    public static final String K_BEGIN = "begin";
+    public static final String K_END = "end";
+    public static final String K_STOP = "stop";
+
+    private PendingIntent piFor(Event e, String kind) {
         Intent i = new Intent(ctx, ReminderReceiver.class);
-        i.setAction(e.id);
+        i.setAction(kind + ":" + e.id);
         i.putExtra("id", e.id);
+        i.putExtra("kind", kind);
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= 23) flags |= PendingIntent.FLAG_IMMUTABLE;
-        return PendingIntent.getBroadcast(ctx, e.id.hashCode(), i, flags);
+        return PendingIntent.getBroadcast(ctx, (e.id + "#" + kind).hashCode(), i, flags);
+    }
+
+    private void setAlarm(AlarmManager am, long at, PendingIntent pi) {
+        if (Build.VERSION.SDK_INT >= 23) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi);
+        else am.setExact(AlarmManager.RTC_WAKEUP, at, pi);
     }
 }
 

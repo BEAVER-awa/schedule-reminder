@@ -119,7 +119,7 @@ public class AgendaAdapter extends BaseAdapter {
         LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams((int) dp(3), LinearLayout.LayoutParams.MATCH_PARENT);
         bar.setLayoutParams(blp);
         GradientDrawable gd = new GradientDrawable();
-        gd.setColor(e.color);
+        gd.setColor(Store.get(ctx).colorOf(e));
         gd.setCornerRadius(dp(2));
         bar.setBackground(gd);
         card.addView(bar);

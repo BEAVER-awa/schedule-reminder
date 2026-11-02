@@ -538,21 +538,11 @@ public class MainActivity extends Activity {
         updateTitle();
     }
 
-    private void relocateSelection() {
-        Calendar c = Calendar.getInstance();
-        c.setTimeInMillis(selectedMillis);
-        int dom = c.get(Calendar.DAY_OF_MONTH);
-        Calendar n = Calendar.getInstance();
-        n.set(year, month, 1);
-        int nd = Math.min(dom, n.getActualMaximum(Calendar.DAY_OF_MONTH));
-        n.set(year, month, nd);
-        selectedMillis = Store.dayStart(n.getTimeInMillis());
-    }
-
     private void onMonthChanged(int y, int m) {
         year = y;
         month = m;
-        relocateSelection();
+        // 翻月只切换视图，不改动选中日期：
+        // 之前这里会把选中日「搬」到新月份的同一天号，导致选中高亮跟着手指跑
         refreshAll();
         updateTitle();
     }

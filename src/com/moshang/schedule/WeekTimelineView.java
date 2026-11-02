@@ -162,7 +162,7 @@ public class WeekTimelineView extends View {
         }
         if (y1 - y0 < dp(19)) y1 = y0 + dp(19);
 
-        pEv.setColor(e.color);
+        pEv.setColor(store != null ? store.colorOf(e) : e.color);
         pEv.setAlpha(235);
         rf.set(x0, y0, x1, y1);
         cv.drawRoundRect(rf, dp(5), dp(5), pEv);

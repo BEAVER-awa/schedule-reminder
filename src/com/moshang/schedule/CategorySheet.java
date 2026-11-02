@@ -20,12 +20,15 @@ public class CategorySheet extends Sheet {
     private final EditText nameEt;
     private final LinearLayout palette;
     private int color;
+    private boolean colorTouched;   // 用户手动选过色就不再自动匹配
+    private final boolean isNew;
 
     public CategorySheet(final Context c, String title, String name, int color0,
                          final boolean isNew, final OnDone done) {
         super(c, title);
         this.origName = name;
         this.done = done;
+        this.isNew = isNew;
         this.color = color0;
 
         nameEt = new EditText(c);
@@ -38,6 +41,19 @@ public class CategorySheet extends Sheet {
         nameEt.setBackgroundResource(R.drawable.bg_field);
         nameEt.setPadding(dp(14), dp(12), dp(14), dp(12));
         if (name != null) nameEt.setText(name);
+        nameEt.addTextChangedListener(new android.text.TextWatcher() {
+            public void beforeTextChanged(CharSequence s2, int a, int b, int c2) {}
+            public void onTextChanged(CharSequence s2, int a, int b, int c2) {}
+            public void afterTextChanged(android.text.Editable e2) {
+                if (!isNew || colorTouched) return;
+                // 只有命中语义关键词才改色；没命中就保持当前颜色，避免输入过程中闪变
+                int auto = Store.colorOrZero(e2.toString());
+                if (auto != 0 && auto != color) {
+                    color = auto;
+                    buildPalette();
+                }
+            }
+        });
         LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         nlp.leftMargin = dp(16);
@@ -122,25 +138,64 @@ public class CategorySheet extends Sheet {
 
     private void buildPalette() {
         palette.removeAllViews();
+        palette.setOrientation(LinearLayout.VERTICAL);
+
+        LinearLayout row = null;
         for (int i = 0; i < Store.PALETTE.length; i++) {
+            if (i % 6 == 0) {
+                row = new LinearLayout(ctx);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT);
+                if (i > 0) rlp.topMargin = dp(10);
+                row.setLayoutParams(rlp);
+                palette.addView(row);
+            }
             final int col = Store.PALETTE[i];
             View sw = new View(ctx);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(30), dp(30));
-            lp.rightMargin = dp(8);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(38), dp(38));
+            lp.rightMargin = dp(7);
             sw.setLayoutParams(lp);
             GradientDrawable g = new GradientDrawable();
             g.setShape(GradientDrawable.OVAL);
             g.setColor(col);
-            if (col == color) g.setStroke(dp(3), 0x66000000);
+            if (col == color) g.setStroke(dp(3), 0xFF17233A);
             sw.setBackground(g);
             sw.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     color = col;
+                    colorTouched = true;
                     buildPalette();
                 }
             });
-            palette.addView(sw);
+            row.addView(sw);
         }
+
+        // 第三行：自定义颜色
+        TextView custom = new TextView(ctx);
+        custom.setText("自定义颜色…");
+        custom.setTextSize(13);
+        custom.setTextColor(ctx.getResources().getColor(R.color.text_secondary));
+        custom.setGravity(Gravity.CENTER);
+        custom.setBackgroundResource(R.drawable.bg_field);
+        custom.setPadding(dp(12), dp(9), dp(12), dp(9));
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        clp.topMargin = dp(12);
+        custom.setLayoutParams(clp);
+        custom.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                new ColorPickerSheet(ctx, color, new ColorPickerSheet.OnPick() {
+                    public void onPick(int c2) {
+                        color = c2;
+                        colorTouched = true;
+                        buildPalette();
+                    }
+                }).showSheet();
+            }
+        });
+        palette.addView(custom);
     }
 }
 

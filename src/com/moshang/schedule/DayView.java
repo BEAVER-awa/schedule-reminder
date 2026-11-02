@@ -97,11 +97,12 @@ public class DayView extends View {
             float left = labelW + dp(6);
             float right = w - dp(10);
 
-            pBlock.setColor((e.color & 0x00FFFFFF) | 0x33000000);
+            int ec = Store.get(getContext()).colorOf(e);
+            pBlock.setColor((ec & 0x00FFFFFF) | 0x33000000);
             rf.set(left, top, right, bot);
             cv.drawRoundRect(rf, dp(6), dp(6), pBlock);
 
-            pBlock.setColor(e.color);
+            pBlock.setColor(ec);
             rf.set(left, top, left + dp(3), bot);
             cv.drawRoundRect(rf, dp(1.5f), dp(1.5f), pBlock);
 

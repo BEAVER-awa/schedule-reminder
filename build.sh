@@ -15,7 +15,7 @@ echo "[1/6] aapt2 compile"
 echo "[2/6] aapt2 link"
 "$BT/aapt2" link -o build/base.apk -I "$AJAR" --manifest AndroidManifest.xml \
   -R build/res.zip --java build/gen --min-sdk-version 24 --target-sdk-version 34 \
-  -A "$ROOT/assets" --auto-add-overlay --version-code 1 --version-name 0.0.1
+  -A "$ROOT/assets" --auto-add-overlay
 
 echo "[3/6] javac"
 find src -name "*.java" > build/sources.txt
